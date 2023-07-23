@@ -1,0 +1,49 @@
+const int microphonePin = 4;  
+const int relayPin = 16;      
+
+const int whistleThreshold = 500; 
+const int whistleDuration = 5000; 
+
+unsigned long lastWhistleTime = 0;
+int whistleCount = 0;
+
+void setup() {
+  pinMode(microphonePin, INPUT);
+  pinMode(relayPin, OUTPUT);
+  digitalWrite(relayPin, LOW); 
+  Serial.begin(9600);
+}
+
+void loop() {
+  int microphoneValue = digitalRead(microphonePin);
+
+  // Detect a rising edge (low to high transition) of the microphone signal
+  if (microphoneValue == HIGH) {
+    unsigned long currentMillis = millis();
+    if (currentMillis - lastWhistleTime > whistleDuration) {
+      // If enough time has passed since the last whistle, consider it a new whistle
+      whistleCount++;
+      Serial.print("Whistle detected! Count: ");
+      Serial.println(whistleCount);
+
+      // Reset the timer for the next whistle
+      lastWhistleTime = currentMillis;
+
+      if (whistleCount == 2) {
+        // Two whistles detected, turn on the relay
+        digitalWrite(relayPin, HIGH);
+        Serial.println("Relay turned ON!");
+      }
+    }
+  }
+
+  // Turn off the relay after two whistles
+  if (whistleCount == 2) {
+    unsigned long currentMillis = millis();
+    if (currentMillis - lastWhistleTime > 10000) { 
+      digitalWrite(relayPin, LOW);
+      Serial.println("Relay turned OFF!");
+      whistleCount = 0; 
+    }
+  }
+}
